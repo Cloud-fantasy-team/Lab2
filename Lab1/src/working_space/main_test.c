@@ -37,6 +37,7 @@ double time_diff(struct timeval x , struct timeval y)
 
 /*任务结构体 直接在dancinglinck里文件流输出结果 不用考虑返回结果数组了*/
 struct job{
+	int puzzleNo;	//题目在输入文件中的编号  在第n行就是n
 	int board[81]; //题目
 };
 
