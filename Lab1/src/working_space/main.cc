@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/time.h>
 
+
 #include "sudoku.h"
 
 int64_t now()
