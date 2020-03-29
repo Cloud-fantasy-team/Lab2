@@ -26,6 +26,7 @@ using namespace std;
 bool (*solve)(int,job_t&) = solve_sudoku_dancing_links_2;
 int total_solved = 0;
 
+
 //计算时间差
 double time_diff(struct timeval x , struct timeval y)
 {
@@ -59,8 +60,8 @@ queue<struct job_t> JOB_POOL;		//改用队列这一数据结构
 priority_queue<struct job_t,vector<struct job_t>,cmp> SOLVE_POOL;  //答案队列->sudoku.h
 //任务池锁
 pthread_mutex_t jobPoolMutex=PTHREAD_MUTEX_INITIALIZER;
-//计数锁
-pthread_mutex_t countMutex=PTHREAD_MUTEX_INITIALIZER;
+//解题计数变量锁
+pthread_mutex_t totalSolvedCountMutex=PTHREAD_MUTEX_INITIALIZER;
 //输入文件
 FILE* fp;
 long int jobReadCount=0;	//记录本文件已经读入了多少个任务
@@ -139,7 +140,7 @@ void* problemReadThread(void *arg){
 }
 
 //解题线程函数
-void* problemSolveThread(void *i){
+void* problemSolveThread(void *threadNo){
 
 	//试图一直消费
 	while(1){
@@ -153,30 +154,35 @@ void* problemSolveThread(void *i){
 		int jobGetCount=0;
 		while(1){
 			if(JOB_POOL.size()<=0){
-				//这时候队列如果为空了  说明本次取不满JOB_UNIT_SIZE个任务 并且此时文件中所有任务都已经全部求解完了	
+				//这时候队列如果为空了  说明此时文件中所有任务都已经被拿完了	
 				//任务池不满JOB_UNIT_SIZE时，有可能是任务全部完成，有可能是还存在不满JOB_UNIT_SIZE的任务
 				//将任务池剩余的任务处理
-				printf("jobGetCount=%d\n",jobGetCount);
+
 				for(int i=0;i<jobGetCount;i++){
-					printf("[%u]: 消费者%d进入临界区 puzzleNO: %d\n",pthread_self(),(unsigned long)i,t[i].puzzleNo);
+					printf("[%u]: 消费者%d正在解题 puzzleNO: %d\n",pthread_self(),(unsigned long)threadNo,t[i].puzzleNo);
 					//如果求解成功返回了true
 				  	if (solve(0,t[i])) {		
 				  	//成功求解计数增加
-						pthread_mutex_lock(&countMutex);
+				  		pthread_mutex_lock(&totalSolvedCountMutex);
 						++total_solved;
 						SOLVE_POOL.push(t[i]);
-						pthread_mutex_unlock(&countMutex);
-						/*
-						if (!solved())	//即使solve返回了true 也要对整个解进行横列、九宫格的校验
-					 		assert(0);*/
+						pthread_mutex_unlock(&totalSolvedCountMutex);
 				  	}
 				  	else {//solve返回了false 表示无解
-						printf("No solution\n");	//输出：NO：  表示该题目无解
+						printf("No solution:\n\t");	//该题目无解 并打印对应题目
+						for(int j=0;j<81;j++){
+							printf("%d",t[i].board[j]);
+						}
+						printf("\n");
 				  	}
 				}
-			  	
-				printf("所有任务都求解完毕！！！\n");	
-				printf("[%u]: 最后一个消费者%d退出 其他在等的就等着吧\n",pthread_self(),(unsigned long)i);
+			  	if(jobGetCount>0){
+					printf("[%u]: 消费者%d最后的零头任务解题完毕！！！\n",pthread_self(),(unsigned long)threadNo);
+					printf("[%u]: 消费者%d退出  通知其他在等待的解题线程退出\n",pthread_self(),(unsigned long)threadNo);	
+				}
+				else{
+					printf("[%u]: 消费者%d发现任务队列已空 退出并通知其他在等待的解题线程退出\n",pthread_self(),(unsigned long)threadNo);
+				}
 				//释放锁，并且将信号量poolFull增加，使得沉睡的消费者线程苏醒并退出
 				pthread_mutex_unlock(&jobPoolMutex);
 				sem_post(&poolFull); 
@@ -192,27 +198,28 @@ void* problemSolveThread(void *i){
 			if(jobGetCount>=JOB_UNIT_SIZE){
 				break;
 			}
-
-			
 		}
-		//释放锁
+		//释放锁 让其他线程进入临界区获取任务
 		pthread_mutex_unlock(&jobPoolMutex);
 		sem_post(&poolEmpty);
+		
+		//真正的解题过程
 		for(int i=0;i<jobGetCount;i++){
-			printf("[%u]: 消费者%d进入临界区 puzzleNO: %d\n",pthread_self(),(unsigned long)i,t[i].puzzleNo);
+			printf("[%u]: 消费者%d正在解题 puzzleNO: %d\n",pthread_self(),(unsigned long)threadNo,t[i].puzzleNo);
 			//如果求解成功返回了true
 			if (solve(0,t[i])) {		
-			//成功求解计数增加
-				pthread_mutex_lock(&countMutex);
+				//成功求解计数增加
+				pthread_mutex_lock(&totalSolvedCountMutex);
 				++total_solved;
 				SOLVE_POOL.push(t[i]);
-				pthread_mutex_unlock(&countMutex);
-				/*
-				if (!solved())	//即使solve返回了true 也要对整个解进行横列、九宫格的校验
-					 assert(0);*/
+				pthread_mutex_unlock(&totalSolvedCountMutex);
 			}
 			else {//solve返回了false 表示无解
-				printf("No solution\n");	//输出：NO：  表示该题目无解
+				printf("No solution:\n\t");	//该题目无解 并打印对应题目
+				for(int j=0;j<81;j++){
+					printf("%d",t[i].board[j]);
+				}
+				printf("\n");
 			}
 		} 
 	}
@@ -220,7 +227,7 @@ void* problemSolveThread(void *i){
 
 
 int main(){
-  struct timeval tvGenStart,tvEnd;
+  struct timeval tvStart,tvEnd;
   
   
   	//等待输入流
@@ -236,7 +243,7 @@ int main(){
     	
     ThreadParas thPara[NUM_OF_WORK_THREAD];					//线程参数结构体数组
     
- 	gettimeofday(&tvGenStart,NULL);	//记录起始时间
+ 	gettimeofday(&tvStart,NULL);	//记录起始时间
  
   
     pthread_create(&problemReader, NULL, problemReadThread, NULL);  //创建各类线程   （这里面的参数根据你们自己写代码的函数可具体修改）
@@ -251,13 +258,9 @@ int main(){
     	pthread_join(problemSolvers[i], NULL);
     }
 
-
-
-  printf("Generating input jobs ...\n");
-
 	for(int i=0;i<1000000;i++){}
   	gettimeofday(&tvEnd,NULL);
-  	printf("Process finished. Spend %.5lf s to finish.",time_diff(tvGenStart,tvEnd)/1E6);
+  	printf("Process finished. Spend %.5lf s to finish.",time_diff(tvStart,tvEnd)/1E6);
 	printf("total solved:%d\n",total_solved);
 	for(;!SOLVE_POOL.empty();SOLVE_POOL.pop()){
 		job_t jobb = SOLVE_POOL.top();
