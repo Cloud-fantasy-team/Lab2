@@ -230,7 +230,7 @@ void* problemSolveThread(void *threadNo){
 }
 
 
-int main(int argc, char* argv){
+int main(int argc, char* argv[]){
   	struct timeval tvStart,tvEnd;
 	
   	if (argv[1] != NULL){
@@ -278,6 +278,27 @@ int main(int argc, char* argv){
   	gettimeofday(&tvEnd,NULL);
   	printf("Process finished. Spend %.5lf s to finish.",time_diff(tvStart,tvEnd)/1E6);
 	printf("total solved:%d\n",total_solved);
+	
+	//开始写入文本
+	FILE * fp2;
+	printf("input the file name to store the results: \n");
+	char outFileName[20];
+	//输入文件名
+	scanf("%s",outFileName);
+	if((fp2 = fopen(outFileName, "w"))!=NULL){
+		for(;!SOLVE_POOL.empty();SOLVE_POOL.pop()){
+			job_t jobb = SOLVE_POOL.top();
+			fprintf(fp2,"job ID:%d ",jobb.puzzleNo);
+			for(int i = 0; i < N; ++i){
+				fprintf(fp2,"%d",jobb.board[i]);
+			}
+			fprintf(fp2,"\n");
+		}
+	}	
+	
+	//打印以下本次运行的所有参数情况
+	printf("POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
+	/*	
 	for(;!SOLVE_POOL.empty();SOLVE_POOL.pop()){
 		job_t jobb = SOLVE_POOL.top();
 		printf("job ID:%d ",jobb.puzzleNo);
@@ -285,7 +306,8 @@ int main(int argc, char* argv){
 			printf("%d",jobb.board[i]);
 		}
 		printf("\n");
-	}
+	} */
+	
 	//printf("POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
     return 0;
 }
