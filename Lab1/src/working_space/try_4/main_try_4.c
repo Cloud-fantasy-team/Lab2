@@ -21,7 +21,7 @@ using namespace std;
 /*解题线程数量*/
 #define NUM_OF_WORK_THREAD 2
 
-bool (*solve)(int) = solve_sudoku_dancing_links;
+bool (*solve)(int,job_t) = solve_sudoku_dancing_links_2;
 int total_solved = 0;
 
 //计算时间差
@@ -54,6 +54,7 @@ typedef struct {
 /*任务池*/
 //struct job JOB_POOL[POOL_SIZE];	
 queue<struct job_t> JOB_POOL;		//改用队列这一数据结构
+queue<struct job_t> SOLVE_POOL;     //答案队列
 //任务池锁
 pthread_mutex_t jobPoolMutex=PTHREAD_MUTEX_INITIALIZER;
 //输入文件
@@ -155,11 +156,12 @@ void* problemSolveThread(void *i){
 				for(int i=0;i<jobGetCount;i++){
 					printf("[%u]: 消费者%d进入临界区 puzzleNO: %d\n",pthread_self(),(unsigned long)i,t[i].puzzleNo);
 					//如果求解成功返回了true
-				  	if (solve(0)) {		
+				  	if (solve(0,t[i])) {		
 				  	//成功求解计数增加
 						++total_solved;
+						/*
 						if (!solved())	//即使solve返回了true 也要对整个解进行横列、九宫格的校验
-					 		assert(0);
+					 		assert(0);*/
 				  	}
 				  	else {//solve返回了false 表示无解
 						printf("No solution\n");	//输出：NO：  表示该题目无解
@@ -186,23 +188,24 @@ void* problemSolveThread(void *i){
 
 			
 		}
-		 
-		//释放锁
-		pthread_mutex_unlock(&jobPoolMutex);
-		sem_post(&poolEmpty);
 		for(int i=0;i<jobGetCount;i++){
 			printf("[%u]: 消费者%d进入临界区 puzzleNO: %d\n",pthread_self(),(unsigned long)i,t[i].puzzleNo);
 			//如果求解成功返回了true
-			if (solve(0)) {		
+			if (solve(0,t[i])) {		
 			//成功求解计数增加
 				++total_solved;
+				/*
 				if (!solved())	//即使solve返回了true 也要对整个解进行横列、九宫格的校验
-					 assert(0);
+					 assert(0);*/
 			}
 			else {//solve返回了false 表示无解
 				printf("No solution\n");	//输出：NO：  表示该题目无解
 			}
-		} 
+		}
+		 
+		//释放锁
+		 pthread_mutex_unlock(&jobPoolMutex);
+		sem_post(&poolEmpty); 
 	}
 }
 

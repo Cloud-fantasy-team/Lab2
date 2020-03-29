@@ -8,3 +8,4 @@ try_3: main_try_3.c neighbor.cc sudoku_basic.cc sudoku_min_arity.cc sudoku_min_a
 
 clean: 
 	-rm try_3
+
