@@ -2,6 +2,8 @@
 #include <memory.h>
 #include <map>
 #include <vector>
+#include <stdio.h>
+#include <queue>
 
 #include "sudoku.h"
 using namespace std;
@@ -252,8 +254,8 @@ struct Dance
     }
 };
 
-bool solve_sudoku_dancing_links_2(int unused, job_t job)
+bool solve_sudoku_dancing_links_2(int unused, job_t& job)
 {
-  Dance d(job.board);
-  return d.solve();
+  	Dance d(job.board);
+	return d.solve();
 }
