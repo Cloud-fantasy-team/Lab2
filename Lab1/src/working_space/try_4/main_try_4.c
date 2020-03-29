@@ -167,7 +167,11 @@ void* problemSolveThread(void *threadNo){
 						pthread_mutex_unlock(&totalSolvedCountMutex);
 				  	}
 				  	else {//solve返回了false 表示无解
-						printf("No solution\n");	//输出：NO：  表示该题目无解
+						printf("No solution:\n\t");	//该题目无解 并打印对应题目
+						for(int j=0;j<81;j++){
+							printf("%d",t[i].board[j]);
+						}
+						printf("\n");
 				  	}
 				}
 			  	if(jobGetCount>0){
