@@ -9,6 +9,8 @@
 #include <sys/time.h>
 #include <time.h>
 #include <queue>
+#include <vector>
+
 #include "sudoku.h"
 using namespace std;
 
@@ -21,7 +23,7 @@ using namespace std;
 /*解题线程数量*/
 #define NUM_OF_WORK_THREAD 2
 
-bool (*solve)(int,job_t) = solve_sudoku_dancing_links_2;
+bool (*solve)(int,job_t&) = solve_sudoku_dancing_links_2;
 int total_solved = 0;
 
 //计算时间差
@@ -54,9 +56,11 @@ typedef struct {
 /*任务池*/
 //struct job JOB_POOL[POOL_SIZE];	
 queue<struct job_t> JOB_POOL;		//改用队列这一数据结构
-queue<struct job_t> SOLVE_POOL;     //答案队列
+priority_queue<struct job_t,vector<struct job_t>,cmp> SOLVE_POOL;  //答案队列->sudoku.h
 //任务池锁
 pthread_mutex_t jobPoolMutex=PTHREAD_MUTEX_INITIALIZER;
+//计数锁
+pthread_mutex_t countMutex=PTHREAD_MUTEX_INITIALIZER;
 //输入文件
 FILE* fp;
 long int jobReadCount=0;	//记录本文件已经读入了多少个任务
@@ -158,7 +162,10 @@ void* problemSolveThread(void *i){
 					//如果求解成功返回了true
 				  	if (solve(0,t[i])) {		
 				  	//成功求解计数增加
+						pthread_mutex_lock(&countMutex);
 						++total_solved;
+						SOLVE_POOL.push(t[i]);
+						pthread_mutex_unlock(&countMutex);
 						/*
 						if (!solved())	//即使solve返回了true 也要对整个解进行横列、九宫格的校验
 					 		assert(0);*/
@@ -196,7 +203,10 @@ void* problemSolveThread(void *i){
 			//如果求解成功返回了true
 			if (solve(0,t[i])) {		
 			//成功求解计数增加
+				pthread_mutex_lock(&countMutex);
 				++total_solved;
+				SOLVE_POOL.push(t[i]);
+				pthread_mutex_unlock(&countMutex);
 				/*
 				if (!solved())	//即使solve返回了true 也要对整个解进行横列、九宫格的校验
 					 assert(0);*/
@@ -249,5 +259,13 @@ int main(){
   	gettimeofday(&tvEnd,NULL);
   	printf("Process finished. Spend %.5lf s to finish.",time_diff(tvGenStart,tvEnd)/1E6);
 	printf("total solved:%d\n",total_solved);
+	for(;!SOLVE_POOL.empty();SOLVE_POOL.pop()){
+		job_t jobb = SOLVE_POOL.top();
+		printf("job ID:%d ",jobb.puzzleNo);
+		for(int i = 0; i < N; ++i){
+			printf("%d",jobb.board[i]);
+		}
+		printf("\n");
+	}
     return 0;
 }
