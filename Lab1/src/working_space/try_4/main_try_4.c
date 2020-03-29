@@ -188,6 +188,9 @@ void* problemSolveThread(void *i){
 
 			
 		}
+		//释放锁
+		pthread_mutex_unlock(&jobPoolMutex);
+		sem_post(&poolEmpty);
 		for(int i=0;i<jobGetCount;i++){
 			printf("[%u]: 消费者%d进入临界区 puzzleNO: %d\n",pthread_self(),(unsigned long)i,t[i].puzzleNo);
 			//如果求解成功返回了true
@@ -201,11 +204,7 @@ void* problemSolveThread(void *i){
 			else {//solve返回了false 表示无解
 				printf("No solution\n");	//输出：NO：  表示该题目无解
 			}
-		}
-		 
-		//释放锁
-		 pthread_mutex_unlock(&jobPoolMutex);
-		sem_post(&poolEmpty); 
+		} 
 	}
 }
 
