@@ -85,7 +85,7 @@ sem_t poolFull;			//任务池满
 
 void getFileSource(){
 //printf("input the file name: \n");
-	char fileName[20]="test1000";
+	char fileName[20]="test1000000";
 	//输入文件名
 //	scanf("%s",fileName);
 	fp = fopen(fileName, "r");	//  ./sudoku test1 a  test1是输入文件名
@@ -230,7 +230,7 @@ void* problemSolveThread(void *threadNo){
 
 
 int main(int argc, char* argv[]){
-  	struct timeval tvStart,tvEnd;
+  	struct timeval tvStart_cal,tvEnd_cal,tvStart_write,tvEnd_write;
 	int TEST_NO=0;
   	if (argv[1] != NULL){
 		POOL_SIZE = atoi(argv[1]);
@@ -258,7 +258,7 @@ int main(int argc, char* argv[]){
     	
     ThreadParas thPara[NUM_OF_WORK_THREAD];					//线程参数结构体数组
     
- 	gettimeofday(&tvStart,NULL);	//记录起始时间
+ 	gettimeofday(&tvStart_cal,NULL);	//记录起始时间
  
   
     pthread_create(&problemReader, NULL, problemReadThread, NULL);  //创建各类线程   （这里面的参数根据你们自己写代码的函数可具体修改）
@@ -274,10 +274,11 @@ int main(int argc, char* argv[]){
     }
 
 
-  	gettimeofday(&tvEnd,NULL);
-  	printf("Process finished. Spend %.5lf s to finish.",time_diff(tvStart,tvEnd)/1E6);
-	printf("total solved:%d\n",total_solved);
+  	gettimeofday(&tvEnd_cal,NULL);
+  	printf("calculating finished. Spend %.5lf s to finish.",time_diff(tvStart_cal,tvEnd_cal)/1E6);
+	printf("total solved:%d\n",total_solved); 
 	
+	gettimeofday(&tvStart_write,NULL);
 	//开始写入文本
 	FILE * fp2;
 	//printf("input the file name to store the results: \n");
@@ -313,26 +314,20 @@ int main(int argc, char* argv[]){
 			fprintf(fp2,"\n");
 		}
 	}	
+	
+	gettimeofday(&tvEnd_write,NULL);
+  	printf("writing finished. Spend %.5lf s to finish.",time_diff(tvStart_write,tvEnd_write)/1E6);
+	printf("total solved:%d\n",total_solved);
 	//写入本次参数
 	fprintf(fp2,"POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d\n",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
 	//写入耗时和解题数量
-	fprintf(fp2,"Process finished. Spend %.5lf s to finish.\n",time_diff(tvStart,tvEnd)/1E6);
 	fprintf(fp2,"total solved:%d\n",total_solved);
+	fprintf(fp2,"calculating finished. Spend %.5lf s to finish.\n",time_diff(tvStart_cal,tvEnd_cal)/1E6);
+	fprintf(fp2,"writing finished. Spend %.5lf s to finish.\n",time_diff(tvStart_write,tvEnd_write)/1E6);
 	
 	//打印以下本次运行的所有参数情况
 	printf("POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
 
-	
-	/*	
-	for(;!SOLVE_POOL.empty();SOLVE_POOL.pop()){
-		job_t jobb = SOLVE_POOL.top();
-		printf("job ID:%d ",jobb.puzzleNo);
-		for(int i = 0; i < N; ++i){
-			printf("%d",jobb.board[i]);
-		}
-		printf("\n");
-	} */
-	
-	//printf("POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
+
     return 0;
 }
