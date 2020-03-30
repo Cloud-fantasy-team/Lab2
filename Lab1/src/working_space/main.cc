@@ -32,8 +32,12 @@ int main(int argc, char* argv[])
     else if (argv[2][0] == 'd')
       solve = solve_sudoku_dancing_links;
   int64_t start = now();
+
+  FILE * fp2;
+  fp2 = fopen("result", "w");
+
   while (fgets(puzzle, sizeof puzzle, fp) != NULL) {	//IO操作 从输入文件中按行读入puzzle
-  printf(puzzle);		//打印一下读入的数独字符串
+  fprintf(puzzle);		//打印一下读入的数独字符串
     if (strlen(puzzle) >= N) {		//N定义在sudoku.h中 值为81
       ++total;			//解题数量
       input(puzzle);	//这个方法在sudoku_basic.cc中实现  所有解题算法共用这一个input方法
@@ -51,13 +55,15 @@ int main(int argc, char* argv[])
           assert(0);
       }
       else {//solve返回了false 表示无解
-        printf("No: %s", puzzle);	//输出：NO： puzzle  表示该题目无解
+        fprintf("No: %s", puzzle);	//输出：NO： puzzle  表示该题目无解
       }
     }
   }
   int64_t end = now();	//获取结束执行时间
   double sec = (end-start)/1000000.0;
   printf("%f sec %f ms each %d\n", sec, 1000*sec/total, total_solved);
+  
+  fclose(fp2);
 
   return 0;
 }

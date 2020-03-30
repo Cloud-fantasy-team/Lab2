@@ -86,9 +86,9 @@ sem_t poolFull;			//任务池满
 
 void getFileSource(){
 //printf("input the file name: \n");
-	char fileName[20]="test1000";
+	char fileName[20]="";
 	//输入文件名
-//	scanf("%s",fileName);
+	scanf("%s",fileName);
 	fp = fopen(fileName, "r");	//  ./sudoku test1 a  test1是输入文件名
 }
 

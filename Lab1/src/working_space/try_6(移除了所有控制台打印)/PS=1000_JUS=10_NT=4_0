@@ -1,0 +1,4 @@
+POOL_SIZE: 1000 JOB_UNIT_SIZE: 10 SEM_MAXIMUM: 100 NUM_OF_WORK_THREAD: 4
+total solved:0
+calculating finished. Spend 0.00033 s to finish.
+writing finished. Spend 0.00944 s to finish.
