@@ -10,6 +10,7 @@
 #include <time.h>
 #include <queue>
 #include <vector>
+
 #include "sudoku.h"
 using namespace std;
 
@@ -23,7 +24,7 @@ int JOB_UNIT_SIZE = 10;
 int SEM_MAXIMUM = 100;
 //#define SEM_MAXIMUM 100	//这个值为任务池大小/任务单元大小
 /*解题线程数量*/
-int NUM_OF_WORK_THREAD = 2;
+int NUM_OF_WORK_THREAD = sysconf(_SC_NPROCESSORS_ONLN);
 //#define NUM_OF_WORK_THREAD 2
 
 bool (*solve)(int,job_t&) = solve_sudoku_dancing_links_2;
@@ -85,7 +86,7 @@ sem_t poolFull;			//任务池满
 
 void getFileSource(){
 //printf("input the file name: \n");
-	char fileName[20]="test1000000";
+	char fileName[20]="test1000";
 	//输入文件名
 //	scanf("%s",fileName);
 	fp = fopen(fileName, "r");	//  ./sudoku test1 a  test1是输入文件名
@@ -239,11 +240,12 @@ int main(int argc, char* argv[]){
 		JOB_UNIT_SIZE = atoi(argv[2]);
 		SEM_MAXIMUM = POOL_SIZE/JOB_UNIT_SIZE;
 	}
+	/*
  	if (argv[3] != NULL){
 		NUM_OF_WORK_THREAD = atoi(argv[3]);
-	}
-	if (argv[4] != NULL){
-		TEST_NO = atoi(argv[4]);
+	}*/
+	if (argv[3] != NULL){
+		TEST_NO = atoi(argv[3]);
 	}
   	//等待输入流
   	getFileSource();
@@ -326,7 +328,7 @@ int main(int argc, char* argv[]){
 	fprintf(fp2,"writing finished. Spend %.5lf s to finish.\n",time_diff(tvStart_write,tvEnd_write)/1E6);
 	
 	//打印以下本次运行的所有参数情况
-	printf("POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
+	printf("POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d\n",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
 
 
     return 0;
