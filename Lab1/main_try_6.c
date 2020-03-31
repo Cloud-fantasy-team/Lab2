@@ -279,8 +279,8 @@ int main(int argc, char* argv[]){
 
 
   	gettimeofday(&tvEnd_cal,NULL);
-  	printf("calculating finished. Spend %.5lf s to finish.",time_diff(tvStart_cal,tvEnd_cal)/1E6);
-	printf("total solved:%d\n",total_solved); 
+  	//printf("calculating finished. Spend %.5lf s to finish.",time_diff(tvStart_cal,tvEnd_cal)/1E6);
+	//printf("total solved:%d\n",total_solved); 
 	/*
 	gettimeofday(&tvStart_write,NULL);
 	//开始写入文本
