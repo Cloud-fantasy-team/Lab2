@@ -320,6 +320,7 @@ int main(int argc, char* argv[]){
 	gettimeofday(&tvEnd_write,NULL);
   	printf("writing finished. Spend %.5lf s to finish.",time_diff(tvStart_write,tvEnd_write)/1E6);
 	printf("total solved:%d\n",total_solved);
+	printf("total finished. Spend %.5lf s to finish.",time_diff(tvStart_write,tvEnd_write)/1E6+time_diff(tvStart_cal,tvEnd_cal)/1E6);
 	//写入本次参数
 	fprintf(fp2,"POOL_SIZE: %d JOB_UNIT_SIZE: %d SEM_MAXIMUM: %d NUM_OF_WORK_THREAD: %d\n",POOL_SIZE, JOB_UNIT_SIZE, SEM_MAXIMUM, NUM_OF_WORK_THREAD);
 	//写入耗时和解题数量
